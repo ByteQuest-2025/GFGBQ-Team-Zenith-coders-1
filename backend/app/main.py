@@ -7,7 +7,8 @@ import logging
 
 from .core.config import settings
 from .db.mongo import connect_to_mongo, close_mongo_connection
-from .routers import auth, complaints, officer, admin
+from .routers import auth, complaints, officers, admin
+from .ai import initialize_ai_engine
 
 # Configure logging
 logging.basicConfig(
@@ -22,8 +23,19 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting AI Grievance Redressal API...")
     await connect_to_mongo()
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    
+    # Initialize AI Engine
+    try:
+        logger.info("🤖 Loading AI Triage Engine...")
+        initialize_ai_engine()
+        logger.info("✅ AI Engine loaded successfully")
+    except Exception as e:
+        logger.error(f"❌ AI Engine failed to load: {e}")
+        logger.warning("⚠️ System will use fallback triage")
+    
     logger.info("✅ Application ready")
     yield
+    
     # Shutdown
     await close_mongo_connection()
     logger.info("👋 Application shutdown complete")
@@ -48,10 +60,10 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 # Include routers
-app.include_router(auth)
-app.include_router(complaints)
-app.include_router(officer)
-app.include_router(admin)
+app.include_router(auth.router)
+app.include_router(complaints.router)
+app.include_router(officers.router)
+app.include_router(admin.router)
 
 @app.get("/")
 async def root():
@@ -59,9 +71,10 @@ async def root():
         "message": "AI Grievance Redressal API",
         "version": "1.0.0",
         "docs": "/docs",
-        "status": "operational"
+        "status": "operational",
+        "ai_enabled": True
     }
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "ai": "enabled"}
