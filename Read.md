@@ -1,6 +1,3 @@
-# COMPLETE README.md
-
-```markdown
 # 🚀 AI-Powered Grievance Redressal System
 
 > Intelligent complaint management platform with AI classification, voice input, duplicate detection, and smart routing
@@ -13,43 +10,21 @@
 
 ---
 
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Architecture](#architecture)
-- [Workflow Diagrams](#workflow-diagrams)
-- [Tech Stack](#tech-stack)
-- [Installation](#installation)
-- [Usage](#usage)
-- [API Documentation](#api-documentation)
-- [Future Enhancements](#future-enhancements)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
 ## 🎯 Overview
 
-The **AI-Powered Grievance Redressal System** revolutionizes citizen complaint management by leveraging artificial intelligence to automatically classify, prioritize, and route complaints to the appropriate government officers. The system achieves **93% classification accuracy** and reduces manual triage time by **85%**.
+The **AI-Powered Grievance Redressal System** revolutionizes citizen complaint management by leveraging artificial intelligence to automatically classify, prioritize, and route complaints to government officers. The system achieves **93% classification accuracy** and reduces manual triage time by **85%**.
 
 ### Problem Statement
 
-Traditional complaint systems suffer from:
-- Manual classification causing delays
-- Duplicate complaints overwhelming officers
-- Poor routing leading to SLA violations
-- Language barriers limiting accessibility
-- Lack of transparency in resolution progress
+- Manual complaint classification causes delays
+- Duplicate complaints overwhelm officers
+- Poor routing leads to SLA violations
+- Language barriers limit accessibility
+- Lack of transparency in resolution
 
 ### Our Solution
 
-An intelligent platform that:
-- **Automatically classifies** complaints using NLP (93% accuracy)
-- **Detects duplicates** using semantic similarity (75% threshold)
-- **Routes smartly** based on workload, location, and expertise
-- **Supports voice input** in multiple languages
-- **Provides real-time tracking** and notifications
+An intelligent platform that automatically classifies complaints using NLP, detects duplicates, routes smartly based on workload and location, supports multilingual voice input, and provides real-time tracking with notifications.
 
 ---
 
@@ -61,303 +36,73 @@ An intelligent platform that:
 |---------|-------------|--------|
 | **Smart Classification** | NLP-based categorization into 8 categories | 93% accuracy |
 | **Urgency Detection** | Keyword analysis assigns priority levels | 85% time saved |
-| **Duplicate Detection** | TF-IDF similarity matching | 60% reduction in redundant complaints |
+| **Duplicate Detection** | TF-IDF similarity matching | 60% reduction in redundancy |
 | **Voice Input** | Speech-to-text with multilingual support | Increased accessibility |
 
-### 🎯 Smart Routing
+### 🎯 Core Capabilities
 
-```
-Complaint → AI Analysis → Officer Selection (Workload + Zone + Expertise) → Assignment
-```
-
+**Smart Routing System**
 - Load balancing across officers
 - Zone-based geographic assignment
 - Specialization matching
 - SLA-based prioritization
 
-### 📊 Multi-Role Dashboards
+**Multi-Role Dashboards**
+- **Citizen Portal:** Voice/text submission, real-time tracking, duplicate warnings
+- **Officer Dashboard:** Complaint queue, status updates, workload analytics
+- **Admin Panel:** System-wide analytics, officer management, heatmap visualization
 
-#### 👤 Citizen Portal
-- Voice/text complaint submission
-- Real-time status tracking
-- Duplicate warnings
-- Feedback submission
-
-#### 👮 Officer Dashboard
-- Complaint queue management
-- Status updates with notes
-- Workload analytics
-- Performance metrics
-
-#### 🔐 Admin Panel
-- System-wide analytics
-- Officer management
-- Category monitoring
-- Heatmap visualization
-
-### 🔔 Notifications
-
+**Notifications**
 - Email alerts for status updates
-- SMS notifications (Twilio integration)
-- In-app real-time updates
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         FRONTEND LAYER                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-│  │   Citizen    │  │   Officer    │  │    Admin     │         │
-│  │   Portal     │  │  Dashboard   │  │    Panel     │         │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘         │
-│         │                  │                  │                  │
-│         └──────────────────┼──────────────────┘                  │
-│                            │                                     │
-│                     React 18 + Vite                              │
-└────────────────────────────┼────────────────────────────────────┘
-                             │
-                    ┌────────▼────────┐
-                    │   API Gateway   │
-                    │   (FastAPI)     │
-                    └────────┬────────┘
-                             │
-        ┏────────────────────┼────────────────────┓
-        │                    │                    │
-┌───────▼────────┐  ┌───────▼────────┐  ┌───────▼────────┐
-│   Auth Layer   │  │  Business Logic│  │   AI Engine    │
-│   (JWT)        │  │   Controllers  │  │   (NLP/ML)     │
-└───────┬────────┘  └───────┬────────┘  └───────┬────────┘
-        │                    │                    │
-        └────────────────────┼────────────────────┘
-                             │
-                    ┌────────▼────────┐
-                    │   Data Layer    │
-                    │   (MongoDB)     │
-                    └─────────────────┘
-                             │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-┌───────▼────────┐  ┌───────▼────────┐  ┌───────▼────────┐
-│  Complaints    │  │     Users      │  │   Analytics    │
-│  Collection    │  │   Collection   │  │   Collection   │
-└────────────────┘  └────────────────┘  └────────────────┘
-```
-
----
-
-## 🔄 Workflow Diagrams
-
-### 1. Complaint Submission Workflow
-
-```
-┌─────────────┐
-│   Citizen   │
-│ Opens Portal│
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────┐
-│ Voice/Text Input│
-│ (Multilingual)  │
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────┐      ┌──────────────┐
-│  AI Engine      │◄─────│  NLP Model   │
-│  Classification │      │  93% Accuracy│
-└──────┬──────────┘      └──────────────┘
-       │
-       ├──► Category (8 types)
-       ├──► Urgency (LOW/MEDIUM/HIGH)
-       └──► Keywords Extracted
-       │
-       ▼
-┌─────────────────┐
-│ Duplicate Check │
-│ (TF-IDF 75%)    │
-└──────┬──────────┘
-       │
-       ├──► Similar Found? → Warning Message
-       │
-       ▼
-┌─────────────────┐
-│  Smart Routing  │
-│  Algorithm      │
-└──────┬──────────┘
-       │
-       ├──► Load Balance Check
-       ├──► Zone Matching
-       └──► Specialization Match
-       │
-       ▼
-┌─────────────────┐
-│ Officer Assigned│
-│ Notification Sent│
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────┐
-│ Complaint ID    │
-│ Generated       │
-│ (GR-XXXXXX)     │
-└─────────────────┘
-```
-
-### 2. Officer Resolution Workflow
-
-```
-┌──────────────┐
-│   Officer    │
-│ Logs In      │
-└──────┬───────┘
-       │
-       ▼
-┌──────────────────┐
-│  Dashboard Loads │
-│  Assigned Queue  │
-└──────┬───────────┘
-       │
-       ▼
-┌──────────────────┐
-│ Views Complaint  │
-│ (AI Analysis +   │
-│  Location +      │
-│  History)        │
-└──────┬───────────┘
-       │
-       ▼
-┌──────────────────┐
-│ Status Update    │
-│ - IN_PROGRESS    │
-│ - INVESTIGATING  │
-│ - RESOLVED       │
-└──────┬───────────┘
-       │
-       ├──► Add Notes
-       │
-       ▼
-┌──────────────────┐
-│ Notification     │
-│ Sent to Citizen  │
-└──────┬───────────┘
-       │
-       ▼ (If RESOLVED)
-┌──────────────────┐
-│ Citizen Feedback │
-│ (5-star rating)  │
-└──────────────────┘
-```
-
-### 3. AI Classification Pipeline
-
-```
-┌─────────────────┐
-│  Input Text     │
-│  (Complaint)    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Text Preprocessing│
-│ - Lowercase     │
-│ - Remove punctuation│
-│ - Tokenization  │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Feature Extraction│
-│ - TF-IDF Vector │
-│ - Word Embeddings│
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Classification  │
-│ - Random Forest │
-│ - 93% Accuracy  │
-└────────┬────────┘
-         │
-         ├──► Category
-         ├──► Confidence Score
-         └──► Keywords
-         │
-         ▼
-┌─────────────────┐
-│ Urgency Analysis│
-│ - Keyword Match │
-│ - Priority Level│
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Output Results  │
-│ + Routing Info  │
-└─────────────────┘
-```
+- SMS notifications via Twilio
+- Real-time in-app updates
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-```
+
 React 18.2          │ Modern UI framework
 Vite 5.0            │ Lightning-fast build tool
 TailwindCSS 3.3     │ Utility-first CSS
 Shadcn/ui           │ Component library
 Recharts            │ Analytics visualization
 Leaflet             │ Interactive maps
-Axios               │ HTTP client
-React Hook Form     │ Form management
-```
+
 
 ### Backend
-```
+
 FastAPI 0.104       │ High-performance async API
 Python 3.11         │ Core language
 MongoDB 7.0         │ NoSQL database
 Motor               │ Async MongoDB driver
-Pydantic 2.0        │ Data validation
 JWT                 │ Authentication
 Scikit-learn        │ ML algorithms
 NLTK                │ NLP processing
-```
 
-### AI/ML
-```
-Random Forest       │ Classification model
+
+### AI/ML Stack
+
+Random Forest       │ Classification model (93% accuracy)
 TF-IDF              │ Text vectorization
+Cosine Similarity   │ Duplicate detection (75% threshold)
 NLTK                │ Text preprocessing
-Scikit-learn        │ Model training
-Cosine Similarity   │ Duplicate detection
-```
 
-### Infrastructure
-```
-Docker              │ Containerization
-Nginx               │ Reverse proxy
-GitHub Actions      │ CI/CD pipeline
-MongoDB Atlas       │ Cloud database
-```
 
 ---
 
 ## 📦 Installation
 
 ### Prerequisites
-```bash
+
 - Python 3.11+
 - Node.js 18+
 - MongoDB 7.0+
-- Git
-```
 
 ### Backend Setup
 
-```bash
+
 # Clone repository
 git clone https://github.com/YOUR_USERNAME/grievance-system.git
 cd grievance-system/backend
@@ -378,11 +123,10 @@ python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 
 # Start server
 uvicorn app.main:app --reload --port 8000
-```
+
 
 ### Frontend Setup
 
-```bash
 cd ../frontend
 
 # Install dependencies
@@ -390,19 +134,19 @@ npm install
 
 # Configure environment
 cp .env.example .env
-# Edit .env with API URL
+# Edit .env with API URL (http://localhost:8000)
 
 # Start development server
 npm run dev
-```
+
 
 ### Access Application
 
-```
-Frontend: http://localhost:5173
+
+Frontend:    http://localhost:5173
 Backend API: http://localhost:8000
-API Docs: http://localhost:8000/docs
-```
+API Docs:    http://localhost:8000/docs
+
 
 ---
 
@@ -410,67 +154,46 @@ API Docs: http://localhost:8000/docs
 
 ### Default Login Credentials
 
-#### Admin
-```
+**Admin**
+
 Email: admin@gov.in
 Password: admin123
-```
 
-#### Officer
-```
+
+**Officer**
+
 Email: officer1@gov.in
 Password: officer123
-```
 
-#### Citizen
-```
-Register new account or use test account
+
+**Citizen**
+
 Email: citizen@example.com
 Password: citizen123
-```
 
-### Creating a Complaint
 
-1. **Citizen Login** → Dashboard → "File New Complaint"
-2. **Choose Input Method:**
-   - Text input (English)
-   - Voice input (Click microphone icon)
-3. **Fill Details:**
-   - Title
-   - Description
-   - Location (with map)
-   - Optional: Upload photo
-4. **Submit** → AI automatically:
-   - Classifies category
-   - Assigns urgency
-   - Detects duplicates
-   - Routes to officer
-5. **Receive Complaint ID** (GR-XXXXXX)
-6. **Track Status** in real-time
+### Quick Start Guide
 
-### Officer Workflow
+**For Citizens:**
+1. Register/Login → Dashboard
+2. Click "File New Complaint"
+3. Choose text or voice input
+4. Fill details (title, description, location)
+5. Submit → Receive complaint ID (GR-XXXXXX)
+6. Track status in real-time
 
-1. **Login** → Officer Dashboard
-2. **View Assigned Complaints** (filtered by status)
-3. **Click Complaint** → View full details with AI analysis
-4. **Update Status:**
-   - Mark as IN_PROGRESS
-   - Add investigation notes
-   - Mark as RESOLVED
-5. **Citizen receives notification**
+**For Officers:**
+1. Login → View assigned complaints
+2. Click complaint → View AI analysis
+3. Update status (IN_PROGRESS/RESOLVED)
+4. Add notes
+5. Citizen receives notification automatically
 
-### Admin Monitoring
-
-1. **Login** → Admin Panel
-2. **View Analytics:**
-   - Total complaints by category
-   - Resolution rates
-   - Officer performance
-   - Geographic heatmap
-3. **Manage Officers:**
-   - Add/edit officers
-   - Assign zones
-   - Set specializations
+**For Admins:**
+1. Login → View system analytics
+2. Monitor officer performance
+3. Manage users and officers
+4. View geographic heatmap
 
 ---
 
@@ -478,47 +201,42 @@ Password: citizen123
 
 ### Authentication
 
-```http
-POST /auth/register
-POST /auth/login
-GET /auth/me
-```
+POST /auth/register      # Register new user
+POST /auth/login         # Login and get JWT token
+GET  /auth/me            # Get current user info
+
 
 ### Complaints
 
-```http
-POST /complaints/submit           # Submit new complaint
-GET /complaints/my                # Get user's complaints
-GET /complaints/{id}              # Get complaint by ID
-PUT /complaints/{id}/status       # Update status (Officer only)
-GET /complaints/search            # Search complaints
-```
+POST /complaints/submit        # Submit new complaint
+GET  /complaints/my            # Get user's complaints
+GET  /complaints/{id}          # Get complaint by ID
+PUT  /complaints/{id}/status   # Update status (Officer only)
+GET  /complaints/search        # Search complaints
+
 
 ### Officers
 
-```http
-GET /officers/assigned            # Get assigned complaints
-GET /officers/workload            # Get workload statistics
-PUT /officers/profile             # Update profile
-```
+GET /officers/assigned         # Get assigned complaints
+GET /officers/workload         # Get workload statistics
+PUT /officers/profile          # Update profile
+
 
 ### Admin
 
-```http
-GET /admin/analytics              # System-wide analytics
-GET /admin/officers               # List all officers
-POST /admin/officers              # Create officer account
-GET /admin/heatmap                # Geographic complaint data
-```
+GET  /admin/analytics          # System-wide analytics
+GET  /admin/officers           # List all officers
+POST /admin/officers           # Create officer account
+GET  /admin/heatmap            # Geographic complaint data
+
 
 ### Feedback
 
-```http
-POST /complaints/{id}/feedback    # Submit rating (Citizen)
-GET /complaints/{id}/feedback     # Get feedback
-```
+POST /complaints/{id}/feedback  # Submit rating (Citizen)
+GET  /complaints/{id}/feedback  # Get feedback
 
-**Full API Documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+**Interactive API Documentation:** http://localhost:8000/docs
 
 ---
 
@@ -526,198 +244,167 @@ GET /complaints/{id}/feedback     # Get feedback
 
 ### 🤖 AI/ML Features
 
-#### 1. **Computer Vision Integration**
-```
-Feature: Photo-based Auto-Classification
-- Upload pothole image → AI detects "Infrastructure"
+#### 1. Computer Vision Integration
+- Upload pothole image → AI auto-classifies as "Infrastructure"
 - Extract GPS from EXIF metadata
 - Severity estimation from image analysis
-Technology: TensorFlow, Google Vision API
-Impact: 40% faster complaint filing
-```
+- **Technology:** TensorFlow, Google Vision API
+- **Impact:** 40% faster complaint filing
 
-#### 2. **Predictive Analytics**
-```
-Feature: Complaint Hotspot Forecasting
-- Time-series analysis of historical data
+#### 2. Predictive Analytics
+- Time-series forecasting of complaint hotspots
 - "Zone 5 will have 12 complaints next week"
 - Proactive officer allocation
-Technology: Prophet, LSTM, XGBoost
-Impact: Prevent 30% of complaints through proactive action
-```
+- **Technology:** Prophet, LSTM, XGBoost
+- **Impact:** Prevent 30% of complaints through proactive action
 
-#### 3. **Sentiment-Based Escalation**
-```
-Feature: Emotion Detection Auto-Prioritization
-- Angry/frustrated tone → HIGH urgency
-- Real-time sentiment analysis
+#### 3. Sentiment-Based Auto-Escalation
+- Detect angry/frustrated tone → auto-prioritize to HIGH
+- Real-time emotion analysis from text
 - Dynamic SLA adjustment
-Technology: VADER, TextBlob, BERT
-Impact: 50% improvement in citizen satisfaction
-```
+- **Technology:** VADER, TextBlob, BERT
+- **Impact:** 50% improvement in citizen satisfaction
 
-#### 4. **Advanced NLP Enhancement**
-```
-Feature: Deep Learning Classification
-- Upgrade to Transformer models (BERT/RoBERTa)
+#### 4. Advanced NLP with Transformers
+- Upgrade to BERT/RoBERTa models
 - Increase accuracy from 93% → 97%+
 - Multilingual support (10+ languages)
-Technology: HuggingFace Transformers
-Impact: Better accuracy across diverse inputs
-```
+- **Technology:** HuggingFace Transformers
+- **Impact:** Better accuracy across diverse inputs
 
-#### 5. **Smart Recommendation Engine**
-```
-Feature: Similar Resolution Suggestions
-- "Similar complaints resolved by doing X"
+#### 5. Smart Recommendation Engine
+- Suggest solutions based on similar resolved complaints
+- "Similar issues resolved by doing X"
 - Knowledge base building
-- Best practice recommendations
-Technology: Collaborative Filtering, Case-Based Reasoning
-Impact: 35% faster resolution time
-```
+- **Technology:** Collaborative Filtering, Case-Based Reasoning
+- **Impact:** 35% faster resolution time
 
-#### 6. **Anomaly Detection**
-```
-Feature: Fraud/Spam Complaint Detection
-- Identify fake or malicious complaints
-- Pattern recognition for spam bots
+#### 6. Anomaly Detection for Fraud Prevention
+- Identify fake or spam complaints
+- Pattern recognition for bot submissions
 - Protect system integrity
-Technology: Isolation Forest, Autoencoders
-Impact: 90% reduction in spam complaints
-```
+- **Technology:** Isolation Forest, Autoencoders
+- **Impact:** 90% reduction in spam
 
-### 💻 General Backend Features
+---
 
-#### 1. **Blockchain Integration**
-```
-Feature: Immutable Complaint Records
-- Store complaint hashes on blockchain
+### 💻 Backend Features
+
+#### 1. Blockchain Integration
+- Immutable complaint records on distributed ledger
 - Transparent, tamper-proof audit trail
-- Smart contracts for SLA enforcement
-Technology: Ethereum, Hyperledger
-Impact: 100% transparency and trust
-```
+- Smart contracts for automatic SLA enforcement
+- **Technology:** Ethereum, Hyperledger
+- **Impact:** 100% transparency and trust
 
-#### 2. **Advanced Search & Filtering**
-```
-Feature: Elasticsearch Integration
+#### 2. Elasticsearch for Advanced Search
 - Full-text search across all complaints
-- Fuzzy matching, typo tolerance
+- Fuzzy matching with typo tolerance
 - Complex multi-field queries
-Technology: Elasticsearch
-Impact: 10x faster search performance
-```
+- **Technology:** Elasticsearch
+- **Impact:** 10x faster search performance
 
-#### 3. **Real-Time WebSocket Updates**
-```
-Feature: Live Status Broadcasting
-- Officer updates → instant citizen notification
-- Live dashboard refresh
-- Chat support between citizen-officer
-Technology: WebSockets, Socket.io
-Impact: Real-time collaboration
-```
+#### 3. Real-Time WebSocket Updates
+- Live status broadcasting to citizens
+- Instant dashboard refresh
+- Chat support between citizen and officer
+- **Technology:** WebSockets, Socket.io
+- **Impact:** Real-time collaboration
 
-#### 4. **Automated Reporting**
-```
-Feature: Scheduled Report Generation
-- Daily/weekly/monthly PDF reports
+#### 4. Automated Reporting System
+- Scheduled daily/weekly/monthly PDF reports
 - Auto-email to administrators
-- Custom report builder
-Technology: ReportLab, Celery, Redis
-Impact: 80% time saved on reporting
-```
+- Custom report builder with filters
+- **Technology:** ReportLab, Celery, Redis
+- **Impact:** 80% time saved on reporting
 
-#### 5. **Multi-Tenant Architecture**
-```
-Feature: Support Multiple Cities/Regions
-- Separate databases per city
+#### 5. Multi-Tenant Architecture
+- Support multiple cities/regions
+- Separate databases per tenant
 - Custom branding and workflows
-- Centralized admin for all tenants
-Technology: Database sharding, Redis caching
-Impact: Scale to 100+ cities
-```
+- **Technology:** Database sharding, Redis caching
+- **Impact:** Scale to 100+ cities
 
-#### 6. **API Rate Limiting & Caching**
-```
-Feature: Performance Optimization
+#### 6. API Rate Limiting & Caching
 - Redis caching for frequent queries
-- Rate limiting to prevent abuse
+- Rate limiting to prevent API abuse
 - CDN integration for static assets
-Technology: Redis, Cloudflare
-Impact: 5x faster response times
-```
+- **Technology:** Redis, Cloudflare
+- **Impact:** 5x faster response times
 
-#### 7. **Advanced Analytics Dashboard**
-```
-Feature: Business Intelligence Layer
-- Predictive charts and trends
-- Officer efficiency scoring
-- Cost-benefit analysis
-Technology: Power BI, Tableau integration
-Impact: Data-driven decision making
-```
+#### 7. Advanced Analytics Dashboard
+- Predictive trends and forecasting
+- Officer efficiency scoring algorithms
+- Cost-benefit analysis reports
+- **Technology:** Power BI, Tableau integration
+- **Impact:** Data-driven decision making
 
-#### 8. **Mobile App (Native)**
-```
-Feature: iOS/Android Native Apps
-- Offline complaint submission
+#### 8. Native Mobile Apps
+- iOS/Android apps with offline support
 - Push notifications
-- Camera integration for photos
-Technology: React Native, Flutter
-Impact: 70% of users prefer mobile
-```
+- Native camera integration
+- **Technology:** React Native, Flutter
+- **Impact:** 70% of users prefer mobile
 
-#### 9. **Workflow Automation**
-```
-Feature: No-Code Workflow Builder
-- Admin can customize routing rules
-- Conditional logic for assignments
+#### 9. Workflow Automation Engine
+- No-code workflow builder for admins
+- Conditional logic for routing rules
 - Automated escalation triggers
-Technology: Apache Airflow, Temporal
-Impact: Flexible workflows without code changes
-```
+- **Technology:** Apache Airflow, Temporal
+- **Impact:** Flexible workflows without code changes
 
-#### 10. **Integration APIs**
-```
-Feature: Third-Party Integrations
-- WhatsApp Bot for complaints
-- Twitter monitoring for mentions
-- Government portal APIs
-Technology: Twilio, Twitter API, REST webhooks
-Impact: Multi-channel complaint intake
-```
+#### 10. Third-Party Integration APIs
+- WhatsApp bot for complaint submission
+- Twitter monitoring for public mentions
+- Government portal API integrations
+- **Technology:** Twilio API, Twitter API, REST webhooks
+- **Impact:** Multi-channel complaint intake
 
 ---
 
 ## 📊 Performance Metrics
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Classification Accuracy | 93% | 97% |
-| Duplicate Detection Rate | 75% | 85% |
-| Average Triage Time | 2 seconds | 1 second |
-| Officer Assignment Time | 5 seconds | 3 seconds |
-| API Response Time (p95) | 150ms | 100ms |
-| System Uptime | 99.5% | 99.9% |
+| Metric | Current Performance |
+|--------|---------------------|
+| Classification Accuracy | 93% |
+| Duplicate Detection Rate | 75% similarity threshold |
+| Average Triage Time | 2 seconds |
+| Officer Assignment Time | 5 seconds |
+| API Response Time (p95) | 150ms |
+| System Uptime | 99.5% |
 
 ---
 
-## 📸 Screenshots
+## 🏗️ Project Structure
 
-> Add screenshots in `/docs/screenshots/` folder
 
-- Citizen Dashboard
-- Complaint Submission (Voice)
-- Officer Queue View
-- Admin Analytics Panel
-- Heatmap Visualization
+grievance-system/
+├── backend/
+│   ├── app/
+│   │   ├── routers/          # API endpoints
+│   │   ├── models/           # Pydantic models
+│   │   ├── db/               # Database config
+│   │   ├── ai/               # AI/ML engine
+│   │   ├── services/         # Business logic
+│   │   └── main.py           # FastAPI app
+│   ├── requirements.txt
+│   └── .env
+├── frontend/
+│   ├── src/
+│   │   ├── components/       # React components
+│   │   ├── services/         # API calls
+│   │   ├── pages/            # Page views
+│   │   └── App.jsx
+│   ├── package.json
+│   └── .env
+└── README.md
+
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
+Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/AmazingFeature`)
@@ -726,14 +413,12 @@ We welcome contributions! Please follow these steps:
 5. Open Pull Request
 
 ### Code Style
-- Python: PEP 8, type hints required
-- JavaScript: ESLint + Prettier
-- Commits: Conventional Commits format
+
+- **Python:** PEP 8 with type hints
+- **JavaScript:** ESLint + Prettier
+- **Commits:** Conventional Commits format
 
 
-</div>
-```
+Copy the entire content between the triple backticks and paste it directly into your README.md file. Remember to replace `YOUR_USERNAME` and contact details with your actual information!
 
-
-
-
+[1](https://img.shields.io/badge/Python-3.)
