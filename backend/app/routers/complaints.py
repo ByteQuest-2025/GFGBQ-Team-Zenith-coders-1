@@ -1,168 +1,178 @@
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Form
-from typing import List, Optional
-from ..schemas.complaint import ComplaintCreate, ComplaintResponse, ComplaintListResponse
-from ..db.mongo import get_database
-from ..core.deps import get_current_user, get_current_citizen
-from ..utils.ids import generate_complaint_id
-from ..utils.time import utc_now
-from ..services.file_storage import file_storage_service
-from ..services.triage_client import triage_client
-from ..services.routing_service import routing_service
-from ..models.complaint import ComplaintStatus
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from typing import Optional, List
+from datetime import datetime
 import logging
+from ..auth.jwt import get_current_user
+from ..db.mongo import get_database
+from ..schemas.complaint import ComplaintCreate, ComplaintResponse
+from ..ai.triage import triage_engine
+from ..services.routing_service import routing_service
+from ..services.notification_service import notification_service
+from ..services.duplicate_detector import duplicate_detector
 
+router = APIRouter()
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/complaints", tags=["Complaints"])
-
-@router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ComplaintResponse, status_code=status.HTTP_201_CREATED)
 async def create_complaint(
     title: str = Form(...),
     description: str = Form(...),
-    language: str = Form("auto"),
     address: str = Form(...),
+    language: str = Form("auto"),
     latitude: Optional[float] = Form(None),
     longitude: Optional[float] = Form(None),
     image: Optional[UploadFile] = File(None),
-    audio: Optional[UploadFile] = File(None),
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Create a new complaint (citizen only)
-    Accepts multipart/form-data with optional image/audio attachments
+    Create a new complaint with AI triage and duplicate detection
     """
+    db = get_database()
     
-    # Validate location data
-    if (latitude is None) != (longitude is None):
+    if not db:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Both latitude and longitude must be provided together"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection not available"
         )
     
-    db = await get_database()
-    complaint_id = generate_complaint_id()
+    # Generate complaint ID
+    complaint_count = await db.complaints.count_documents({})
+    complaint_id = f"CMP{str(complaint_count + 1).zfill(6)}"
     
-    # Handle file uploads
-    attachments = []
-    if image:
-        image_url = await file_storage_service.save_file(image, "image")
-        attachments.append({"type": "image", "url": image_url})
-    
-    if audio:
-        audio_url = await file_storage_service.save_file(audio, "audio")
-        attachments.append({"type": "audio", "url": audio_url})
-    
-    # Create complaint document
-    complaint_doc = {
+    # Prepare complaint data
+    complaint_data = {
         "complaint_id": complaint_id,
-        "user_id": current_user["user_id"],
         "title": title,
         "description": description,
-        "language": language,
         "location": {
             "address": address,
             "latitude": latitude,
-            "longitude": longitude,
-            "ward": None,
-            "zone": None
+            "longitude": longitude
         },
-        "attachments": attachments,
-        "triage": {
-            "category": None,
-            "category_confidence": None,
-            "urgency_level": None,
-            "urgency_score": None,
-            "keywords_detected": []
-        },
-        "routing": {
-            "assigned_department": None,
-            "assigned_officer_id": None,
-            "assigned_officer_name": None,
-            "sla_hours": None,
-            "escalation": {"needed": False, "level": None}
-        },
-        "status": ComplaintStatus.SUBMITTED.value,
-        "status_history": [
-            {
-                "status": ComplaintStatus.SUBMITTED.value,
-                "timestamp": utc_now(),
-                "note": "Complaint submitted by citizen"
-            }
-        ],
-        "created_at": utc_now(),
-        "updated_at": utc_now()
+        "language": language,
+        "status": "SUBMITTED",
+        "submitted_by": current_user.get("user_id"),
+        "submitted_by_email": current_user.get("email"),
+        "submitted_by_phone": current_user.get("phone"),
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "status_history": [{
+            "status": "SUBMITTED",
+            "timestamp": datetime.utcnow(),
+            "note": "Complaint submitted"
+        }]
     }
     
-    result = await db.complaints.insert_one(complaint_doc)
-    logger.info(f"✅ Complaint created: {complaint_id}")
+    # Handle image upload if provided
+    if image:
+        # Save image logic here
+        image_path = f"uploads/{complaint_id}_{image.filename}"
+        complaint_data["image_url"] = image_path
     
-    # Trigger AI triage
+    # Check for duplicates
     try:
-        triage_result = await triage_client.triage_complaint(complaint_doc)
-        complaint_doc["triage"] = triage_result
-        complaint_doc["status"] = ComplaintStatus.TRIAGED.value
-        complaint_doc["status_history"].append({
-            "status": ComplaintStatus.TRIAGED.value,
-            "timestamp": utc_now(),
-            "note": f"Auto-classified as {triage_result.get('category', 'Unknown')}"
-        })
+        existing_complaints = await db.complaints.find({
+            "status": {"$in": ["SUBMITTED", "TRIAGED", "ASSIGNED", "IN_PROGRESS"]}
+        }).to_list(100)
         
-        # Trigger routing
-        routing_result = await routing_service.route_complaint(complaint_doc)
-        complaint_doc["routing"] = routing_result
-        complaint_doc["status"] = ComplaintStatus.ASSIGNED.value
-        complaint_doc["status_history"].append({
-            "status": ComplaintStatus.ASSIGNED.value,
-            "timestamp": utc_now(),
-            "note": f"Assigned to {routing_result['assigned_officer_name']}"
-        })
-        complaint_doc["updated_at"] = utc_now()
-        
-        await db.complaints.update_one(
-            {"_id": result.inserted_id},
-            {"$set": complaint_doc}
+        duplicate_check = duplicate_detector.check_for_duplicates(
+            complaint_data,
+            existing_complaints
         )
         
-        logger.info(f"✅ Complaint triaged and routed: {complaint_id}")
-    
+        complaint_data["duplicate_check"] = duplicate_check
+        
+        if duplicate_check.get("is_duplicate"):
+            logger.info(f"Potential duplicate detected for {complaint_id}")
+            complaint_data["is_potential_duplicate"] = True
+            
     except Exception as e:
-        logger.error(f"❌ Triage/Routing failed: {e}")
+        logger.error(f"Duplicate detection failed: {e}")
+        complaint_data["duplicate_check"] = {
+            "is_duplicate": False,
+            "duplicate_count": 0,
+            "similar_complaints": []
+        }
     
-    return {
-        "id": str(result.inserted_id),
-        "complaint_id": complaint_id,
-        "status": complaint_doc["status"]
-    }
-
-@router.get("", response_model=List[ComplaintListResponse])
-async def list_complaints(
-    mine: bool = False,
-    current_user: dict = Depends(get_current_user)
-):
-    """
-    List complaints
-    Citizens: only their own (mine=true enforced)
-    Officers/Admins: can see all
-    """
-    db = await get_database()
-    
-    query = {}
-    if current_user["role"] == "citizen" or mine:
-        query["user_id"] = current_user["user_id"]
-    
-    complaints = await db.complaints.find(query).sort("created_at", -1).to_list(length=100)
-    
-    return [
-        ComplaintListResponse(
-            complaint_id=c["complaint_id"],
-            title=c["title"],
-            status=c["status"],
-            urgency_level=c.get("triage", {}).get("urgency_level"),
-            created_at=c["created_at"],
-            category=c.get("triage", {}).get("category")
+    # AI Triage
+    try:
+        triage_result = triage_engine.triage_complaint(
+            title=title,
+            description=description,
+            language=language
         )
-        for c in complaints
-    ]
+        
+        complaint_data["category"] = triage_result["category"]
+        complaint_data["urgency_level"] = triage_result["urgency_level"]
+        complaint_data["triage"] = triage_result
+        complaint_data["status"] = "TRIAGED"
+        
+        complaint_data["status_history"].append({
+            "status": "TRIAGED",
+            "timestamp": datetime.utcnow(),
+            "note": f"AI classified as {triage_result['category']} - {triage_result['urgency_level']} urgency"
+        })
+        
+    except Exception as e:
+        logger.error(f"Triage failed: {e}")
+        complaint_data["category"] = "Administrative"
+        complaint_data["urgency_level"] = "MEDIUM"
+    
+    # Smart Routing
+    try:
+        routing_result = routing_service.assign_officer(
+            complaint_data,
+            await db.officers.find().to_list(100)
+        )
+        
+        if routing_result:
+            complaint_data["routing"] = routing_result
+            complaint_data["assigned_to"] = routing_result["assigned_officer_id"]
+            complaint_data["status"] = "ASSIGNED"
+            
+            complaint_data["status_history"].append({
+                "status": "ASSIGNED",
+                "timestamp": datetime.utcnow(),
+                "note": f"Assigned to {routing_result['assigned_officer_name']}"
+            })
+            
+            # Notify officer
+            try:
+                officer = await db.officers.find_one({"officer_id": routing_result["assigned_officer_id"]})
+                if officer:
+                    notification_service.notify_officer_assignment(
+                        complaint_data,
+                        officer.get("email"),
+                        officer.get("name")
+                    )
+            except Exception as e:
+                logger.error(f"Failed to notify officer: {e}")
+                
+    except Exception as e:
+        logger.error(f"Routing failed: {e}")
+    
+    # Save to database
+    result = await db.complaints.insert_one(complaint_data)
+    
+    if not result.inserted_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create complaint"
+        )
+    
+    # Send notification to citizen
+    try:
+        notification_service.notify_complaint_submitted(
+            complaint_data,
+            current_user.get("email"),
+            current_user.get("phone")
+        )
+    except Exception as e:
+        logger.error(f"Failed to send notification: {e}")
+    
+    logger.info(f"Complaint {complaint_id} created successfully")
+    
+    return complaint_data
 
 @router.get("/{complaint_id}", response_model=ComplaintResponse)
 async def get_complaint(
@@ -170,10 +180,16 @@ async def get_complaint(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Get full complaint details
-    Authorization: citizen (own only), officer (assigned), admin (all)
+    Get complaint details by ID
     """
-    db = await get_database()
+    db = get_database()
+    
+    if not db:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection not available"
+        )
+    
     complaint = await db.complaints.find_one({"complaint_id": complaint_id})
     
     if not complaint:
@@ -182,19 +198,132 @@ async def get_complaint(
             detail="Complaint not found"
         )
     
-    # Authorization check
-    if current_user["role"] == "citizen":
-        if complaint["user_id"] != current_user["user_id"]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied"
-            )
-    elif current_user["role"] == "officer":
-        if complaint.get("routing", {}).get("assigned_officer_id") != current_user["user_id"]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="This complaint is not assigned to you"
-            )
+    # Check access permissions
+    user_role = current_user.get("role")
+    if user_role == "citizen" and complaint.get("submitted_by") != current_user.get("user_id"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied"
+        )
     
-    complaint["id"] = str(complaint.pop("_id"))
-    return ComplaintResponse(**complaint)
+    return complaint
+
+@router.get("", response_model=List[ComplaintResponse])
+async def get_complaints(
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+    urgency: Optional[str] = None,
+    mine: Optional[bool] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Get complaints with filters
+    """
+    db = get_database()
+    
+    if not db:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection not available"
+        )
+    
+    query = {}
+    
+    # Apply filters
+    if status:
+        query["status"] = status
+    if category:
+        query["category"] = category
+    if urgency:
+        query["urgency_level"] = urgency
+    
+    # Filter by current user for citizens
+    if current_user.get("role") == "citizen" or mine:
+        query["submitted_by"] = current_user.get("user_id")
+    
+    complaints = await db.complaints.find(query).sort("created_at", -1).to_list(100)
+    
+    return complaints
+
+@router.put("/{complaint_id}/status")
+async def update_complaint_status(
+    complaint_id: str,
+    status: str,
+    note: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Update complaint status (officer/admin only)
+    """
+    db = get_database()
+    
+    if not db:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection not available"
+        )
+    
+    # Verify permissions
+    if current_user.get("role") not in ["officer", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only officers and admins can update status"
+        )
+    
+    complaint = await db.complaints.find_one({"complaint_id": complaint_id})
+    
+    if not complaint:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Complaint not found"
+        )
+    
+    # Update status
+    status_entry = {
+        "status": status,
+        "timestamp": datetime.utcnow(),
+        "updated_by": current_user.get("user_id"),
+        "note": note
+    }
+    
+    result = await db.complaints.update_one(
+        {"complaint_id": complaint_id},
+        {
+            "$set": {
+                "status": status,
+                "updated_at": datetime.utcnow()
+            },
+            "$push": {
+                "status_history": status_entry
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update status"
+        )
+    
+    # Send notifications
+    try:
+        if status == "RESOLVED":
+            notification_service.notify_complaint_resolved(
+                complaint,
+                complaint.get("submitted_by_email"),
+                complaint.get("submitted_by_phone")
+            )
+        else:
+            notification_service.notify_status_updated(
+                complaint,
+                complaint.get("submitted_by_email"),
+                status,
+                note,
+                complaint.get("submitted_by_phone")
+            )
+    except Exception as e:
+        logger.error(f"Failed to send notification: {e}")
+    
+    logger.info(f"Complaint {complaint_id} status updated to {status}")
+    
+    return {"message": "Status updated successfully", "complaint_id": complaint_id, "new_status": status}
